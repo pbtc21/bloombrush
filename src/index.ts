@@ -309,6 +309,28 @@ const layout = (content: string, title = 'Daniel Schneider-Weiler | Hand Painted
       font-size: 0.85rem;
     }
 
+    .admin-card {
+      background: var(--cream);
+      padding: 2rem;
+      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .admin-card-field {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .admin-card-field strong,
+    .admin-card-field span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     @media (max-width: 768px) {
       nav {
         padding: 1.5rem 2rem;
@@ -337,6 +359,16 @@ const layout = (content: string, title = 'Daniel Schneider-Weiler | Hand Painted
 
       .form-row {
         grid-template-columns: 1fr;
+      }
+
+      .admin-card {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 1.5rem;
+      }
+
+      .admin-card select {
+        width: 100%;
       }
     }
   </style>
@@ -372,22 +404,25 @@ app.get('/', (c) => {
       <h2 class="section-title">Portfolio</h2>
       <p class="section-subtitle">Selected Works</p>
       <div class="gallery">
-        <div class="gallery-item" style="background: linear-gradient(135deg, #E8E4DD 0%, #D4CFC4 100%);">
-          <div style="height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--taupe);">Chinoiserie</span>
-            <span style="font-size: 0.7rem; color: var(--taupe); margin-top: 0.5rem; letter-spacing: 0.1em;">Hand painted silk</span>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1549989476-69a92fa57c36?w=800&q=80" alt="Chinoiserie - Hand painted silk with birds and blossoms" style="object-position: center;">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; display: block;">Chinoiserie</span>
+            <span style="font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.9;">Hand painted silk</span>
           </div>
         </div>
-        <div class="gallery-item" style="background: linear-gradient(135deg, #E5E8E4 0%, #CED4C8 100%);">
-          <div style="height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--taupe);">Botanicals</span>
-            <span style="font-size: 0.7rem; color: var(--taupe); margin-top: 0.5rem; letter-spacing: 0.1em;">Watercolor on paper</span>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800&q=80" alt="Botanicals - Watercolor florals on paper" style="object-position: center;">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; display: block;">Botanicals</span>
+            <span style="font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.9;">Watercolor on paper</span>
           </div>
         </div>
-        <div class="gallery-item" style="background: linear-gradient(135deg, #E8E6E4 0%, #D4D0CC 100%);">
-          <div style="height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column;">
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--taupe);">Scenic</span>
-            <span style="font-size: 0.7rem; color: var(--taupe); margin-top: 0.5rem; letter-spacing: 0.1em;">Oil on linen</span>
+        <div class="gallery-item">
+          <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=800&q=80" alt="Scenic - Pastoral landscapes on linen" style="object-position: center;">
+          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
+            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; display: block;">Scenic</span>
+            <span style="font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.9;">Oil on linen</span>
           </div>
         </div>
       </div>
@@ -639,22 +674,22 @@ app.get('/admin', async (c) => {
           }
 
           const html = data.map(apt => \`
-            <div style="background: var(--cream); padding: 2rem; margin-bottom: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 2rem; align-items: center;">
-              <div>
-                <strong>\${apt.first_name} \${apt.last_name}</strong><br>
+            <div class="admin-card">
+              <div class="admin-card-field">
+                <strong>\${apt.first_name} \${apt.last_name}</strong>
                 <span style="color: var(--taupe); font-size: 0.85rem;">\${apt.email}</span>
-                \${apt.phone ? '<br><span style="color: var(--taupe); font-size: 0.85rem;">' + apt.phone + '</span>' : ''}
+                \${apt.phone ? '<span style="color: var(--taupe); font-size: 0.85rem;">' + apt.phone + '</span>' : ''}
               </div>
-              <div>
-                <span style="font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--taupe);">Appointment</span><br>
+              <div class="admin-card-field">
+                <span style="font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--taupe);">Appointment</span>
                 \${apt.date} at \${apt.time}
               </div>
-              <div>
-                <span style="font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--taupe);">Project</span><br>
-                \${apt.project_type || 'Not specified'}
+              <div class="admin-card-field">
+                <span style="font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--taupe);">Project</span>
+                <span>\${apt.project_type || 'Not specified'}</span>
               </div>
-              <div>
-                <select onchange="updateStatus(\${apt.id}, this.value)" style="padding: 0.5rem; border: 1px solid var(--taupe);">
+              <div class="admin-card-field">
+                <select onchange="updateStatus(\${apt.id}, this.value)" style="padding: 0.5rem; border: 1px solid var(--taupe); background: var(--ivory);">
                   <option value="pending" \${apt.status === 'pending' ? 'selected' : ''}>Pending</option>
                   <option value="confirmed" \${apt.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
                   <option value="completed" \${apt.status === 'completed' ? 'selected' : ''}>Completed</option>
