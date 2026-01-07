@@ -703,7 +703,7 @@ const nav = (active = '') => `
   </nav>
 `;
 
-const footer = `
+const footer = () => `
   <footer>
     <a href="/" class="logo">Bloombrush</a>
     <p>&copy; ${new Date().getFullYear()} Bloombrush. All rights reserved.</p>
@@ -760,7 +760,7 @@ app.get('/', (c) => {
       </div>
     </section>
 
-    ${footer}
+    ${footer()}
   `);
 
   return c.html(html);
@@ -808,7 +808,7 @@ app.get('/collection', (c) => {
       </div>
     </section>
 
-    ${footer}
+    ${footer()}
   `, 'Collection | Bloombrush');
 
   return c.html(html);
@@ -955,7 +955,7 @@ app.get('/collection/:design', (c) => {
       }
     </script>
 
-    ${footer}
+    ${footer()}
   `, `${designName} | Bloombrush`);
 
   return c.html(html);
@@ -1027,7 +1027,7 @@ app.get('/process', (c) => {
       </div>
     </div>
 
-    ${footer}
+    ${footer()}
   `, 'Process | Bloombrush');
 
   return c.html(html);
@@ -1064,7 +1064,7 @@ app.get('/about', (c) => {
       <a href="/contact" class="btn" style="margin-top: 2rem;">Begin a Commission</a>
     </div>
 
-    ${footer}
+    ${footer()}
   `, 'About | Bloombrush');
 
   return c.html(html);
@@ -1091,7 +1091,7 @@ app.get('/contact', (c) => {
       </div>
     </div>
 
-    ${footer}
+    ${footer()}
   `, 'Contact | Bloombrush');
 
   return c.html(html);
