@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { serveStatic } from 'hono/cloudflare-workers';
 
 type Bindings = {
   DB: D1Database;
@@ -10,8 +9,8 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 app.use('*', cors());
 
-// Elegant HTML template
-const layout = (content: string, title = 'Daniel Schneider-Weiler | Hand Painted Wallpaper') => `
+// B&W Elegant Layout - color only from wallpaper imagery
+const layout = (content: string, title = 'Bloombrush | Hand Painted Wallpaper') => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,320 +19,619 @@ const layout = (content: string, title = 'Daniel Schneider-Weiler | Hand Painted
   <title>${title}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Didot&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --ivory: #FDFBF7;
-      --cream: #F7F4ED;
-      --taupe: #8B8178;
-      --charcoal: #2C2C2C;
-      --gold: #C4A77D;
-      --sage: #9CAF88;
-    }
-
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    :root {
+      --white: #FFFFFF;
+      --off-white: #FAFAFA;
+      --light-gray: #F5F5F5;
+      --mid-gray: #999999;
+      --dark-gray: #666666;
+      --charcoal: #333333;
+      --black: #000000;
+    }
+
     body {
-      font-family: 'Montserrat', sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-weight: 300;
-      background: var(--ivory);
-      color: var(--charcoal);
-      line-height: 1.8;
-      letter-spacing: 0.02em;
+      background: var(--white);
+      color: var(--black);
+      line-height: 1.6;
+      letter-spacing: 0.01em;
+      -webkit-font-smoothing: antialiased;
     }
 
     h1, h2, h3, h4 {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      letter-spacing: 0.05em;
+      font-family: 'Didot', 'Times New Roman', serif;
+      font-weight: 400;
+      letter-spacing: 0.02em;
     }
 
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Navigation */
     nav {
       position: fixed;
       top: 0;
       width: 100%;
-      padding: 2rem 4rem;
+      padding: 1.5rem 3rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(253, 251, 247, 0.95);
+      background: rgba(255, 255, 255, 0.98);
       backdrop-filter: blur(10px);
-      z-index: 100;
-      border-bottom: 1px solid rgba(139, 129, 120, 0.1);
+      z-index: 1000;
+      border-bottom: 1px solid var(--light-gray);
     }
 
     .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 1.4rem;
+      font-family: 'Didot', serif;
+      font-size: 1.5rem;
       font-weight: 400;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: var(--charcoal);
-      text-decoration: none;
     }
 
     .nav-links {
       display: flex;
-      gap: 3rem;
+      gap: 2.5rem;
+      align-items: center;
     }
 
     .nav-links a {
       font-size: 0.75rem;
-      letter-spacing: 0.2em;
+      font-weight: 400;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      color: var(--taupe);
-      text-decoration: none;
-      transition: color 0.3s ease;
+      color: var(--charcoal);
+      transition: color 0.2s;
+      position: relative;
     }
 
     .nav-links a:hover {
-      color: var(--charcoal);
+      color: var(--black);
     }
 
+    /* Dropdown */
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--white);
+      min-width: 280px;
+      padding: 1.5rem 0;
+      border: 1px solid var(--light-gray);
+      margin-top: 1rem;
+      z-index: 100;
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1.5rem;
+      transition: background 0.2s;
+    }
+
+    .dropdown-item:hover {
+      background: var(--off-white);
+    }
+
+    .dropdown-preview {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border: 1px solid var(--light-gray);
+    }
+
+    .dropdown-text {
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* Hero */
     .hero {
       height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      background: linear-gradient(135deg, var(--cream) 0%, var(--ivory) 100%);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5 Q35 15 30 25 Q25 15 30 5' fill='none' stroke='%239CAF88' stroke-width='0.5' opacity='0.15'/%3E%3Cpath d='M15 30 Q25 35 35 30 Q25 25 15 30' fill='none' stroke='%239CAF88' stroke-width='0.5' opacity='0.1'/%3E%3C/svg%3E");
-      opacity: 0.5;
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      max-width: 800px;
       padding: 2rem;
+      background: var(--off-white);
     }
 
     .hero h1 {
       font-size: 4rem;
-      font-weight: 300;
+      font-weight: 400;
       margin-bottom: 1.5rem;
-      color: var(--charcoal);
+      line-height: 1.1;
     }
 
     .hero .tagline {
-      font-size: 1rem;
-      letter-spacing: 0.3em;
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
-      color: var(--taupe);
+      color: var(--dark-gray);
       margin-bottom: 3rem;
     }
 
     .btn {
       display: inline-block;
-      padding: 1rem 3rem;
+      padding: 1rem 2.5rem;
       font-size: 0.7rem;
-      letter-spacing: 0.25em;
+      font-weight: 500;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      text-decoration: none;
-      border: 1px solid var(--charcoal);
-      color: var(--charcoal);
+      border: 1px solid var(--black);
       background: transparent;
+      color: var(--black);
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
     }
 
     .btn:hover {
-      background: var(--charcoal);
-      color: var(--ivory);
+      background: var(--black);
+      color: var(--white);
     }
 
+    /* Sections */
     section {
-      padding: 8rem 4rem;
+      padding: 6rem 3rem;
       max-width: 1400px;
       margin: 0 auto;
     }
 
-    .section-title {
-      font-size: 2.5rem;
+    .section-header {
       text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .section-subtitle {
-      text-align: center;
-      color: var(--taupe);
-      font-size: 0.8rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
       margin-bottom: 4rem;
     }
 
-    .gallery {
+    .section-header h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-header p {
+      font-size: 0.8rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--mid-gray);
+    }
+
+    /* Collection Grid */
+    .collection-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3rem;
+    }
+
+    .collection-card {
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .collection-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .collection-image {
+      aspect-ratio: 4/3;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+      background: var(--light-gray);
+    }
+
+    .collection-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s;
+    }
+
+    .collection-card:hover .collection-image img {
+      transform: scale(1.03);
+    }
+
+    .collection-name {
+      font-family: 'Didot', serif;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .collection-desc {
+      font-size: 0.85rem;
+      color: var(--dark-gray);
+      line-height: 1.7;
+    }
+
+    /* Design Detail */
+    .design-hero {
+      height: 80vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .design-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .design-hero-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 4rem;
+      background: linear-gradient(transparent, rgba(0,0,0,0.7));
+      color: var(--white);
+    }
+
+    .design-hero-overlay h1 {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .design-info {
+      padding: 4rem 3rem;
+      max-width: 800px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .design-description {
+      font-size: 1rem;
+      line-height: 1.9;
+      color: var(--charcoal);
+      margin-bottom: 3rem;
+    }
+
+    /* Panel Images */
+    .panel-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2rem;
+      padding: 0 3rem 4rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .panel-item {
+      text-align: center;
+    }
+
+    .panel-item img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      margin-bottom: 1rem;
+    }
+
+    .panel-name {
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      color: var(--charcoal);
+    }
+
+    /* Colorways */
+    .colorways {
+      padding: 4rem 3rem;
+      background: var(--off-white);
+    }
+
+    .colorways h3 {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .colorway-grid {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .colorway-item {
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .colorway-item:hover {
+      transform: scale(1.05);
+    }
+
+    .colorway-swatch {
+      width: 120px;
+      height: 120px;
+      border: 1px solid var(--light-gray);
+      margin-bottom: 0.75rem;
+      object-fit: cover;
+    }
+
+    .colorway-name {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--charcoal);
+    }
+
+    /* Color Palette */
+    .palette {
+      padding: 3rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .palette h4 {
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .palette-colors {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .palette-color {
+      text-align: center;
+    }
+
+    .palette-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin: 0 auto 0.5rem;
+      border: 1px solid var(--light-gray);
+    }
+
+    .palette-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.05em;
+      color: var(--dark-gray);
+      max-width: 80px;
+    }
+
+    /* Slider */
+    .slider-container {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 3rem;
+    }
+
+    .slider-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .slider-toggle button {
+      padding: 0.75rem 1.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      background: transparent;
+      border: 1px solid var(--light-gray);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .slider-toggle button.active {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+    }
+
+    .slider-image {
+      width: 100%;
+      aspect-ratio: 16/10;
+      object-fit: cover;
+    }
+
+    /* Install Gallery */
+    .install-gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      padding: 4rem 3rem;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .install-gallery img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .install-gallery img:hover {
+      opacity: 0.9;
+    }
+
+    /* Inspiration */
+    .inspiration {
+      padding: 4rem 3rem;
+      background: var(--off-white);
+    }
+
+    .inspiration h3 {
+      text-align: center;
+      font-size: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .inspiration-grid {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .inspiration-grid img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border: 1px solid var(--light-gray);
+    }
+
+    /* Process Page */
+    .process-hero {
+      height: 70vh;
+      background: var(--off-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .process-section {
+      padding: 6rem 3rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .process-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 2rem;
     }
 
-    .gallery-item {
-      aspect-ratio: 3/4;
-      background: var(--cream);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .gallery-item img {
+    .process-item img {
       width: 100%;
-      height: 100%;
+      aspect-ratio: 1;
       object-fit: cover;
-      transition: transform 0.6s ease;
+      margin-bottom: 1rem;
     }
 
-    .gallery-item:hover img {
-      transform: scale(1.05);
+    .process-item h4 {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
     }
 
-    .about-section {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6rem;
-      align-items: center;
+    .process-item p {
+      font-size: 0.85rem;
+      color: var(--dark-gray);
     }
 
-    .about-image {
-      aspect-ratio: 4/5;
-      background: var(--cream);
-      overflow: hidden;
+    .video-container {
+      padding: 4rem 3rem;
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
-    .about-image img {
+    .video-container video {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
+      aspect-ratio: 16/9;
+      background: var(--light-gray);
     }
 
-    .about-content h2 {
+    /* About Page */
+    .about-content {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 8rem 3rem;
+      text-align: center;
+    }
+
+    .about-content h1 {
       font-size: 2.5rem;
       margin-bottom: 2rem;
     }
 
     .about-content p {
+      font-size: 1rem;
+      line-height: 2;
+      color: var(--charcoal);
       margin-bottom: 1.5rem;
-      color: var(--taupe);
     }
 
-    .booking-section {
-      background: var(--cream);
-      padding: 8rem 4rem;
+    /* Contact */
+    .contact-page {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8rem 3rem;
     }
 
-    .booking-form {
-      max-width: 600px;
-      margin: 0 auto;
+    .contact-content {
+      text-align: center;
+      max-width: 500px;
     }
 
-    .form-group {
+    .contact-content h1 {
+      font-size: 2.5rem;
       margin-bottom: 2rem;
     }
 
-    .form-group label {
-      display: block;
-      font-size: 0.7rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--taupe);
-      margin-bottom: 0.75rem;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 1rem;
-      font-family: 'Montserrat', sans-serif;
+    .contact-content p {
       font-size: 0.9rem;
-      border: 1px solid rgba(139, 129, 120, 0.3);
-      background: var(--ivory);
+      line-height: 1.8;
       color: var(--charcoal);
-      transition: border-color 0.3s ease;
+      margin-bottom: 1rem;
     }
 
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: var(--gold);
+    .contact-email {
+      font-size: 1.1rem;
+      letter-spacing: 0.05em;
+      margin: 2rem 0;
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-
+    /* Footer */
     footer {
+      padding: 3rem;
       text-align: center;
-      padding: 4rem;
-      background: var(--charcoal);
-      color: var(--cream);
+      border-top: 1px solid var(--light-gray);
     }
 
     footer .logo {
-      color: var(--cream);
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       display: block;
     }
 
     footer p {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       letter-spacing: 0.1em;
-      opacity: 0.7;
+      color: var(--mid-gray);
     }
 
-    .success-message {
-      background: var(--sage);
-      color: white;
-      padding: 1rem 2rem;
-      text-align: center;
-      margin-bottom: 2rem;
-      font-size: 0.85rem;
-    }
-
-    .admin-card {
-      background: var(--cream);
-      padding: 2rem;
-      margin-bottom: 1rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    .admin-card-field {
-      min-width: 0;
-      overflow: hidden;
-    }
-
-    .admin-card-field strong,
-    .admin-card-field span {
-      display: block;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
+    /* Responsive */
     @media (max-width: 768px) {
       nav {
-        padding: 1.5rem 2rem;
+        padding: 1rem 1.5rem;
       }
 
       .nav-links {
@@ -345,30 +643,23 @@ const layout = (content: string, title = 'Daniel Schneider-Weiler | Hand Painted
       }
 
       section {
-        padding: 4rem 2rem;
+        padding: 4rem 1.5rem;
       }
 
-      .gallery {
+      .collection-grid {
         grid-template-columns: 1fr;
       }
 
-      .about-section {
-        grid-template-columns: 1fr;
-        gap: 3rem;
-      }
-
-      .form-row {
+      .panel-grid {
         grid-template-columns: 1fr;
       }
 
-      .admin-card {
+      .install-gallery {
         grid-template-columns: 1fr;
-        gap: 1rem;
-        padding: 1.5rem;
       }
 
-      .admin-card select {
-        width: 100%;
+      .process-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -379,348 +670,429 @@ const layout = (content: string, title = 'Daniel Schneider-Weiler | Hand Painted
 </html>
 `;
 
+// Navigation component
+const nav = (active = '') => `
+  <nav>
+    <a href="/" class="logo">Bloombrush</a>
+    <div class="nav-links">
+      <div class="dropdown">
+        <a href="/collection" class="${active === 'collection' ? 'active' : ''}">Collection</a>
+        <div class="dropdown-content">
+          <a href="/collection/chinoiserie" class="dropdown-item">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=100&fit=crop" class="dropdown-preview" alt="Chinoiserie">
+            <span class="dropdown-text">Chinoiserie</span>
+          </a>
+          <a href="/collection/botanicals" class="dropdown-item">
+            <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=100&h=100&fit=crop" class="dropdown-preview" alt="Botanicals">
+            <span class="dropdown-text">Botanicals</span>
+          </a>
+          <a href="/collection/scenic" class="dropdown-item">
+            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop" class="dropdown-preview" alt="Scenic">
+            <span class="dropdown-text">Scenic</span>
+          </a>
+          <a href="/collection/abstract" class="dropdown-item">
+            <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=100&h=100&fit=crop" class="dropdown-preview" alt="Abstract">
+            <span class="dropdown-text">Abstract</span>
+          </a>
+        </div>
+      </div>
+      <a href="/process" class="${active === 'process' ? 'active' : ''}">Process</a>
+      <a href="/about" class="${active === 'about' ? 'active' : ''}">About</a>
+      <a href="/contact" class="${active === 'contact' ? 'active' : ''}">Contact</a>
+    </div>
+  </nav>
+`;
+
+const footer = `
+  <footer>
+    <a href="/" class="logo">Bloombrush</a>
+    <p>&copy; ${new Date().getFullYear()} Bloombrush. All rights reserved.</p>
+  </footer>
+`;
+
 // Home page
 app.get('/', (c) => {
   const html = layout(`
-    <nav>
-      <a href="/" class="logo">DSW</a>
-      <div class="nav-links">
-        <a href="#portfolio">Portfolio</a>
-        <a href="#about">About</a>
-        <a href="#book">Book Consultation</a>
-        <a href="#contact">Contact</a>
-      </div>
-    </nav>
+    ${nav()}
 
     <section class="hero">
-      <div class="hero-content">
-        <h1>Hand Painted Wallpaper</h1>
+      <div>
+        <h1>Hand Painted<br>Wallpaper</h1>
         <p class="tagline">Bespoke artistry for distinguished interiors</p>
-        <a href="#book" class="btn">Schedule a Consultation</a>
+        <a href="/collection" class="btn">View Collection</a>
       </div>
     </section>
 
-    <section id="portfolio">
-      <h2 class="section-title">Portfolio</h2>
-      <p class="section-subtitle">Selected Works</p>
-      <div class="gallery">
-        <div class="gallery-item">
-          <img src="https://degournay.com/uploads/product_category/original/03112022103854.jpg" alt="Chinoiserie - Hand painted silk with birds and blossoms">
-          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; display: block;">Chinoiserie</span>
-            <span style="font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.9;">Hand painted silk</span>
+    <section>
+      <div class="section-header">
+        <h2>The Collection</h2>
+        <p>Explore our designs</p>
+      </div>
+      <div class="collection-grid">
+        <a href="/collection/chinoiserie" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop" alt="Chinoiserie Collection">
           </div>
-        </div>
-        <div class="gallery-item">
-          <img src="https://degournay.com/uploads/product_category/original/06052025040549.webp" alt="Botanicals - Watercolor florals on paper">
-          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; display: block;">Botanicals</span>
-            <span style="font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.9;">Watercolor on paper</span>
+          <h3 class="collection-name">Chinoiserie</h3>
+          <p class="collection-desc">Delicate birds, flowering branches, and traditional Eastern motifs rendered in luminous detail.</p>
+        </a>
+        <a href="/collection/botanicals" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&h=600&fit=crop" alt="Botanicals Collection">
           </div>
-        </div>
-        <div class="gallery-item">
-          <img src="https://degournay.com/uploads/product_category/original/03112022104901.jpg" alt="Scenic - Pastoral landscapes on linen">
-          <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 2rem; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
-            <span style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; display: block;">Scenic</span>
-            <span style="font-size: 0.7rem; letter-spacing: 0.1em; opacity: 0.9;">Oil on linen</span>
+          <h3 class="collection-name">Botanicals</h3>
+          <p class="collection-desc">Lush florals and verdant foliage inspired by historic gardens and natural landscapes.</p>
+        </a>
+        <a href="/collection/scenic" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop" alt="Scenic Collection">
           </div>
-        </div>
+          <h3 class="collection-name">Scenic</h3>
+          <p class="collection-desc">Panoramic landscapes and pastoral scenes that transform walls into windows.</p>
+        </a>
+        <a href="/collection/abstract" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800&h=600&fit=crop" alt="Abstract Collection">
+          </div>
+          <h3 class="collection-name">Abstract</h3>
+          <p class="collection-desc">Contemporary interpretations of color, form, and texture for modern spaces.</p>
+        </a>
       </div>
     </section>
 
-    <section id="about">
-      <div class="about-section">
-        <div class="about-image">
-          <img src="https://media.drewaltizer.com/2126-MATCHESFASHION-COM-celebrates-Aquazzura-for-De-Gournay-exclusive-collection-launch/59bb6edad4380-0101-Matches-170501-min.jpg"
-               alt="Daniel Schneider-Weiler"
-               style="object-position: center 20%;">
-        </div>
-        <div class="about-content">
-          <h2>About the Artist</h2>
-          <p>
-            With over two decades dedicated to the art of hand painted wallpaper,
-            Daniel Schneider-Weiler brings an unparalleled mastery of traditional techniques
-            to contemporary interior design.
-          </p>
-          <p>
-            Each commission begins with a personal consultation, where your vision
-            is translated into a bespoke work of art. From delicate chinoiserie to
-            bold botanical studies, every brushstroke is executed with precision
-            and passion.
-          </p>
-          <p>
-            Based in Los Angeles, Daniel works with discerning clients worldwide
-            to create wallpapers that transform spaces into extraordinary environments.
-          </p>
-          <a href="#book" class="btn" style="margin-top: 1rem;">Begin Your Commission</a>
-        </div>
-      </div>
-    </section>
-
-    <section id="book" class="booking-section">
-      <h2 class="section-title">Book a Consultation</h2>
-      <p class="section-subtitle">In-Person Appointments Available</p>
-      <form class="booking-form" action="/api/book" method="POST">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="firstName">First Name</label>
-            <input type="text" id="firstName" name="firstName" required>
-          </div>
-          <div class="form-group">
-            <label for="lastName">Last Name</label>
-            <input type="text" id="lastName" name="lastName" required>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <input type="email" id="email" name="email" required>
-        </div>
-        <div class="form-group">
-          <label for="phone">Phone Number</label>
-          <input type="tel" id="phone" name="phone">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="date">Preferred Date</label>
-            <input type="date" id="date" name="date" required>
-          </div>
-          <div class="form-group">
-            <label for="time">Preferred Time</label>
-            <select id="time" name="time" required>
-              <option value="">Select a time</option>
-              <option value="10:00">10:00 AM</option>
-              <option value="11:00">11:00 AM</option>
-              <option value="14:00">2:00 PM</option>
-              <option value="15:00">3:00 PM</option>
-              <option value="16:00">4:00 PM</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="projectType">Project Type</label>
-          <select id="projectType" name="projectType">
-            <option value="">Select project type</option>
-            <option value="residential">Residential</option>
-            <option value="commercial">Commercial</option>
-            <option value="hospitality">Hospitality</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="message">Tell us about your project</label>
-          <textarea id="message" name="message" rows="4"></textarea>
-        </div>
-        <button type="submit" class="btn" style="width: 100%;">Request Appointment</button>
-      </form>
-    </section>
-
-    <section id="contact">
-      <h2 class="section-title">Visit the Studio</h2>
-      <p class="section-subtitle">By Appointment Only</p>
-      <div style="text-align: center; color: var(--taupe);">
-        <p style="margin-bottom: 0.5rem;">Los Angeles, California</p>
-        <p style="margin-bottom: 2rem;">studio@dswwallpaper.com</p>
-      </div>
-    </section>
-
-    <footer>
-      <span class="logo">Daniel Schneider-Weiler</span>
-      <p>&copy; ${new Date().getFullYear()} All Rights Reserved</p>
-    </footer>
+    ${footer}
   `);
 
   return c.html(html);
 });
 
-// Booking confirmation page
-app.get('/thank-you', (c) => {
+// Collection page
+app.get('/collection', (c) => {
   const html = layout(`
-    <nav>
-      <a href="/" class="logo">DSW</a>
-      <div class="nav-links">
-        <a href="/#portfolio">Portfolio</a>
-        <a href="/#about">About</a>
-        <a href="/#book">Book Consultation</a>
-        <a href="/#contact">Contact</a>
-      </div>
-    </nav>
+    ${nav('collection')}
 
-    <section class="hero" style="height: 80vh;">
-      <div class="hero-content">
-        <h1>Thank You</h1>
-        <p class="tagline">Your consultation request has been received</p>
-        <p style="color: var(--taupe); margin-bottom: 2rem; max-width: 500px;">
-          We will review your request and contact you within 24 hours to confirm your appointment.
-        </p>
-        <a href="/" class="btn">Return Home</a>
+    <section style="padding-top: 10rem;">
+      <div class="section-header">
+        <h2>The Collection</h2>
+        <p>Hand painted designs</p>
+      </div>
+      <div class="collection-grid">
+        <a href="/collection/chinoiserie" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop" alt="Chinoiserie">
+          </div>
+          <h3 class="collection-name">Chinoiserie</h3>
+          <p class="collection-desc">Delicate birds, flowering branches, and traditional Eastern motifs.</p>
+        </a>
+        <a href="/collection/botanicals" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800&h=600&fit=crop" alt="Botanicals">
+          </div>
+          <h3 class="collection-name">Botanicals</h3>
+          <p class="collection-desc">Lush florals and verdant foliage inspired by historic gardens.</p>
+        </a>
+        <a href="/collection/scenic" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop" alt="Scenic">
+          </div>
+          <h3 class="collection-name">Scenic</h3>
+          <p class="collection-desc">Panoramic landscapes that transform walls into windows.</p>
+        </a>
+        <a href="/collection/abstract" class="collection-card">
+          <div class="collection-image">
+            <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=800&h=600&fit=crop" alt="Abstract">
+          </div>
+          <h3 class="collection-name">Abstract</h3>
+          <p class="collection-desc">Contemporary interpretations for modern spaces.</p>
+        </a>
       </div>
     </section>
 
-    <footer>
-      <span class="logo">Daniel Schneider-Weiler</span>
-      <p>&copy; ${new Date().getFullYear()} All Rights Reserved</p>
-    </footer>
-  `, 'Thank You | Daniel Schneider-Weiler');
+    ${footer}
+  `, 'Collection | Bloombrush');
 
   return c.html(html);
 });
 
-// API: Book appointment
-app.post('/api/book', async (c) => {
-  try {
-    const formData = await c.req.formData();
+// Design detail page (example: Chinoiserie)
+app.get('/collection/:design', (c) => {
+  const design = c.req.param('design');
+  const designName = design.charAt(0).toUpperCase() + design.slice(1);
 
-    const booking = {
-      firstName: formData.get('firstName') as string,
-      lastName: formData.get('lastName') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string || null,
-      date: formData.get('date') as string,
-      time: formData.get('time') as string,
-      projectType: formData.get('projectType') as string || null,
-      message: formData.get('message') as string || null,
-      createdAt: new Date().toISOString(),
-      status: 'pending',
-    };
-
-    // Store in D1 if available
-    if (c.env?.DB) {
-      await c.env.DB.prepare(`
-        INSERT INTO appointments (first_name, last_name, email, phone, date, time, project_type, message, created_at, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).bind(
-        booking.firstName,
-        booking.lastName,
-        booking.email,
-        booking.phone,
-        booking.date,
-        booking.time,
-        booking.projectType,
-        booking.message,
-        booking.createdAt,
-        booking.status
-      ).run();
-    }
-
-    // Redirect to thank you page
-    return c.redirect('/thank-you');
-  } catch (error) {
-    return c.text('Error processing booking', 500);
-  }
-});
-
-// API: Get all appointments (CRM)
-app.get('/api/appointments', async (c) => {
-  if (!c.env?.DB) {
-    return c.json({ error: 'Database not configured' }, 500);
-  }
-
-  const { results } = await c.env.DB.prepare(`
-    SELECT * FROM appointments ORDER BY date DESC, time DESC
-  `).all();
-
-  return c.json(results);
-});
-
-// API: Update appointment status
-app.patch('/api/appointments/:id', async (c) => {
-  if (!c.env?.DB) {
-    return c.json({ error: 'Database not configured' }, 500);
-  }
-
-  const id = c.req.param('id');
-  const { status } = await c.req.json();
-
-  await c.env.DB.prepare(`
-    UPDATE appointments SET status = ? WHERE id = ?
-  `).bind(status, id).run();
-
-  return c.json({ success: true });
-});
-
-// CRM Dashboard
-app.get('/admin', async (c) => {
   const html = layout(`
-    <nav>
-      <a href="/" class="logo">DSW Admin</a>
-      <div class="nav-links">
-        <a href="/">View Site</a>
+    ${nav('collection')}
+
+    <!-- Install Shot Hero -->
+    <div class="design-hero" style="margin-top: 60px;">
+      <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&h=900&fit=crop" alt="${designName} Installation">
+      <div class="design-hero-overlay">
+        <h1>${designName}</h1>
+        <p style="font-size: 0.85rem; letter-spacing: 0.1em; opacity: 0.9;">Hand Painted Collection</p>
       </div>
-    </nav>
+    </div>
 
-    <section style="padding-top: 10rem;">
-      <h2 class="section-title">Appointments</h2>
-      <p class="section-subtitle">Client Management</p>
+    <!-- Description -->
+    <div class="design-info">
+      <p class="design-description">
+        Each ${designName.toLowerCase()} design is meticulously hand-painted on silk or paper grounds,
+        using traditional techniques passed down through generations. The colors are
+        mixed by hand to achieve subtle gradations impossible to replicate through
+        mechanical means. Custom colorways are available for every design.
+      </p>
+    </div>
 
-      <div id="appointments" style="max-width: 1000px; margin: 0 auto;">
-        <p style="text-align: center; color: var(--taupe);">Loading appointments...</p>
+    <!-- Panel Images -->
+    <div class="panel-grid">
+      <div class="panel-item">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=800&fit=crop" alt="${designName} Panel I">
+        <p class="panel-name">${designName} I</p>
+      </div>
+      <div class="panel-item">
+        <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&h=800&fit=crop" alt="${designName} Panel II">
+        <p class="panel-name">${designName} II</p>
+      </div>
+    </div>
+
+    <!-- Design Mini / Product Toggle -->
+    <div class="slider-container">
+      <div class="slider-toggle">
+        <button class="active" onclick="showSlide('mini')">Design Mini</button>
+        <button onclick="showSlide('product')">Product Photography</button>
+        <button onclick="showSlide('render')">Watercolor Rendering</button>
+      </div>
+      <img id="slider-image" class="slider-image" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=750&fit=crop" alt="Design view">
+    </div>
+
+    <!-- Colorways -->
+    <div class="colorways">
+      <h3>Available Colorways</h3>
+      <div class="colorway-grid">
+        <div class="colorway-item">
+          <img class="colorway-swatch" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop" alt="Dawn">
+          <p class="colorway-name">Dawn</p>
+        </div>
+        <div class="colorway-item">
+          <img class="colorway-swatch" src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200&h=200&fit=crop" alt="Twilight">
+          <p class="colorway-name">Twilight</p>
+        </div>
+        <div class="colorway-item">
+          <img class="colorway-swatch" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop" alt="Midnight">
+          <p class="colorway-name">Midnight</p>
+        </div>
+        <div class="colorway-item">
+          <img class="colorway-swatch" src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=200&h=200&fit=crop" alt="Ivory">
+          <p class="colorway-name">Ivory</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Palette -->
+    <div class="palette">
+      <h4>Color Palette — Dawn</h4>
+      <div class="palette-colors">
+        <div class="palette-color">
+          <div class="palette-dot" style="background: #F5E6D3;"></div>
+          <p class="palette-label">Antique Ivory</p>
+        </div>
+        <div class="palette-color">
+          <div class="palette-dot" style="background: #E8D4C4;"></div>
+          <p class="palette-label">Parchment</p>
+        </div>
+        <div class="palette-color">
+          <div class="palette-dot" style="background: #C4A77D;"></div>
+          <p class="palette-label">Aged Gold</p>
+        </div>
+        <div class="palette-color">
+          <div class="palette-dot" style="background: #8B9A7C;"></div>
+          <p class="palette-label">Celadon</p>
+        </div>
+        <div class="palette-color">
+          <div class="palette-dot" style="background: #6B7B5C;"></div>
+          <p class="palette-label">Sage Moss</p>
+        </div>
+        <div class="palette-color">
+          <div class="palette-dot" style="background: #4A5568;"></div>
+          <p class="palette-label">Slate</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inspiration -->
+    <div class="inspiration">
+      <h3>Inspiration</h3>
+      <div class="inspiration-grid">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop" alt="Inspiration 1">
+        <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200&h=200&fit=crop" alt="Inspiration 2">
+        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop" alt="Inspiration 3">
+        <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=200&h=200&fit=crop" alt="Inspiration 4">
+      </div>
+    </div>
+
+    <!-- Install Gallery -->
+    <section style="padding: 0;">
+      <div class="section-header" style="padding: 4rem 3rem 2rem;">
+        <h2>Installations</h2>
+      </div>
+      <div class="install-gallery">
+        <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=450&fit=crop" alt="Installation 1">
+        <img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=600&h=450&fit=crop" alt="Installation 2">
+        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=450&fit=crop" alt="Installation 3">
       </div>
     </section>
 
     <script>
-      async function loadAppointments() {
-        try {
-          const res = await fetch('/api/appointments');
-          const data = await res.json();
+      function showSlide(type) {
+        const buttons = document.querySelectorAll('.slider-toggle button');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
 
-          if (data.error) {
-            document.getElementById('appointments').innerHTML = '<p style="text-align: center; color: var(--taupe);">Database not configured. Appointments will be stored once D1 is set up.</p>';
-            return;
-          }
-
-          if (data.length === 0) {
-            document.getElementById('appointments').innerHTML = '<p style="text-align: center; color: var(--taupe);">No appointments yet.</p>';
-            return;
-          }
-
-          const html = data.map(apt => \`
-            <div class="admin-card">
-              <div class="admin-card-field">
-                <strong>\${apt.first_name} \${apt.last_name}</strong>
-                <span style="color: var(--taupe); font-size: 0.85rem;">\${apt.email}</span>
-                \${apt.phone ? '<span style="color: var(--taupe); font-size: 0.85rem;">' + apt.phone + '</span>' : ''}
-              </div>
-              <div class="admin-card-field">
-                <span style="font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--taupe);">Appointment</span>
-                \${apt.date} at \${apt.time}
-              </div>
-              <div class="admin-card-field">
-                <span style="font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--taupe);">Project</span>
-                <span>\${apt.project_type || 'Not specified'}</span>
-              </div>
-              <div class="admin-card-field">
-                <select onchange="updateStatus(\${apt.id}, this.value)" style="padding: 0.5rem; border: 1px solid var(--taupe); background: var(--ivory);">
-                  <option value="pending" \${apt.status === 'pending' ? 'selected' : ''}>Pending</option>
-                  <option value="confirmed" \${apt.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                  <option value="completed" \${apt.status === 'completed' ? 'selected' : ''}>Completed</option>
-                  <option value="cancelled" \${apt.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                </select>
-              </div>
-            </div>
-          \`).join('');
-
-          document.getElementById('appointments').innerHTML = html;
-        } catch (err) {
-          document.getElementById('appointments').innerHTML = '<p style="text-align: center; color: var(--taupe);">Error loading appointments.</p>';
-        }
+        const images = {
+          mini: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&h=750&fit=crop',
+          product: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1200&h=750&fit=crop',
+          render: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=750&fit=crop'
+        };
+        document.getElementById('slider-image').src = images[type];
       }
-
-      async function updateStatus(id, status) {
-        await fetch('/api/appointments/' + id, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status })
-        });
-      }
-
-      loadAppointments();
     </script>
 
-    <footer>
-      <span class="logo">Daniel Schneider-Weiler</span>
-      <p>&copy; ${new Date().getFullYear()} All Rights Reserved</p>
-    </footer>
-  `, 'Admin | Daniel Schneider-Weiler');
+    ${footer}
+  `, `${designName} | Bloombrush`);
+
+  return c.html(html);
+});
+
+// Process page
+app.get('/process', (c) => {
+  const html = layout(`
+    ${nav('process')}
+
+    <div class="process-hero" style="margin-top: 60px;">
+      <div style="text-align: center;">
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">The Process</h1>
+        <p style="font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dark-gray);">From sketch to installation</p>
+      </div>
+    </div>
+
+    <div class="process-section">
+      <div class="process-grid">
+        <div class="process-item">
+          <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop" alt="Studio">
+          <h4>The Studio</h4>
+          <p>A quiet space dedicated to the craft, filled with natural light and the tools of the trade.</p>
+        </div>
+        <div class="process-item">
+          <img src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=400&h=400&fit=crop" alt="Materials">
+          <h4>Materials</h4>
+          <p>Hand-mixed pigments, fine silk and paper grounds, brushes crafted by master artisans.</p>
+        </div>
+        <div class="process-item">
+          <img src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=400&fit=crop" alt="Inspiration">
+          <h4>Inspiration</h4>
+          <p>Historic archives, botanical specimens, and the natural world inform every design.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-container">
+      <div class="section-header">
+        <h2>The Art of Painting</h2>
+        <p>Watch the process</p>
+      </div>
+      <video controls poster="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1000&h=563&fit=crop">
+        <source src="/video/process.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+      </video>
+    </div>
+
+    <div class="process-section">
+      <div class="section-header">
+        <h2>From Design to Installation</h2>
+      </div>
+      <div class="process-grid">
+        <div class="process-item">
+          <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=400&fit=crop" alt="Design">
+          <h4>1. Design</h4>
+          <p>Each commission begins with sketches and color studies tailored to your space.</p>
+        </div>
+        <div class="process-item">
+          <img src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?w=400&h=400&fit=crop" alt="Painting">
+          <h4>2. Painting</h4>
+          <p>Panels are hand-painted over weeks, layer by delicate layer.</p>
+        </div>
+        <div class="process-item">
+          <img src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=400&fit=crop" alt="Installation">
+          <h4>3. Installation</h4>
+          <p>Professional installation ensures a seamless, lasting result.</p>
+        </div>
+      </div>
+    </div>
+
+    ${footer}
+  `, 'Process | Bloombrush');
+
+  return c.html(html);
+});
+
+// About page
+app.get('/about', (c) => {
+  const html = layout(`
+    ${nav('about')}
+
+    <div class="about-content" style="padding-top: 12rem;">
+      <h1>About Bloombrush</h1>
+      <p>
+        Bloombrush is dedicated to the art of hand-painted wallpaper —
+        a tradition that transforms interiors into immersive environments
+        of beauty and contemplation.
+      </p>
+      <p>
+        Each design is conceived as a unique work of art, executed by skilled
+        artisans using techniques refined over centuries. We work with the finest
+        materials: hand-ground pigments, silk and paper grounds of exceptional
+        quality, and brushes crafted by master toolmakers.
+      </p>
+      <p>
+        Our mission is to create wallpapers that elevate spaces beyond the ordinary —
+        pieces that will be cherished for generations, bringing daily moments of
+        wonder to those who live with them.
+      </p>
+      <p>
+        We collaborate closely with interior designers, architects, and private
+        clients to realize bespoke visions. Every commission is an opportunity
+        to create something unprecedented.
+      </p>
+      <a href="/contact" class="btn" style="margin-top: 2rem;">Begin a Commission</a>
+    </div>
+
+    ${footer}
+  `, 'About | Bloombrush');
+
+  return c.html(html);
+});
+
+// Contact page
+app.get('/contact', (c) => {
+  const html = layout(`
+    ${nav('contact')}
+
+    <div class="contact-page">
+      <div class="contact-content">
+        <h1>Contact</h1>
+        <p>
+          For inquiries about commissions, trade pricing, or to schedule
+          a consultation, please reach out via email.
+        </p>
+        <p class="contact-email">
+          <a href="mailto:studio@bloombrush.com">studio@bloombrush.com</a>
+        </p>
+        <p style="margin-top: 3rem; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid-gray);">
+          Studio visits by appointment
+        </p>
+      </div>
+    </div>
+
+    ${footer}
+  `, 'Contact | Bloombrush');
 
   return c.html(html);
 });
